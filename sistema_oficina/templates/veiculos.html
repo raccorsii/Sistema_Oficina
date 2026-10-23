@@ -1,0 +1,23 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/static/style.css"><title>Veículos</title></head><body><header id="topo"></header><main><div id="msg" class="msg"></div>
+<div class="card"><h3 id="titulo">Novo veículo</h3><form id="f" class="grid"><input type="hidden" id="id">
+<label>Cliente (obrigatório)<select id="cliente_id" required></select></label><label>Placa<input id="placa" required maxlength="8"></label>
+<label>Marca<input id="marca" required></label><label>Modelo<input id="modelo" required></label>
+<label>Ano<input id="ano" type="number" required></label><label>Cor<input id="cor"></label>
+<div><button>Salvar</button> <button type="button" class="sec" id="cancelar">Cancelar</button></div></form></div>
+<div class="card"><table><thead><tr><th>Cliente</th><th>Placa</th><th>Veículo</th><th>Ano</th><th>Cor</th><th></th></tr></thead><tbody id="lista"></tbody></table></div></main>
+<script src="/static/app.js"></script><script>
+const campos=["cliente_id","placa","marca","modelo","ano","cor"];
+function limpar(){ id.value=""; campos.forEach(c=>document.getElementById(c).value=""); titulo.textContent="Novo veículo"; }
+async function carregar(){ const dados=await api("/api/veiculos"); lista.replaceChildren();
+  dados.forEach(v=>{ const tr=el("tr"); [v.cliente_nome,v.placa,v.marca+" "+v.modelo,v.ano,v.cor||""].forEach(t=>tr.append(el("td",String(t))));
+    const td=el("td"); const e=el("button","Editar"); e.onclick=()=>{ id.value=v.id; campos.forEach(k=>document.getElementById(k).value=v[k]??""); titulo.textContent="Editar veículo #"+v.id; scrollTo(0,0); };
+    const x=el("button","Excluir",{className:"perigo"}); x.onclick=async()=>{ if(!confirm("Excluir "+v.placa+"?"))return; try{ await api("/api/veiculos/"+v.id,"DELETE"); mensagem("ok","Veículo excluído."); carregar(); }catch(er){ mensagem("erro",er.message);} };
+    td.append(e," ",x); tr.append(td); lista.append(tr); }); }
+async function clientes(){ const cs=await api("/api/clientes"); cliente_id.replaceChildren(el("option","Selecione...",{value:""}));
+  cs.forEach(c=>cliente_id.append(el("option",c.nome,{value:c.id}))); }
+cancelar.onclick=limpar;
+f.onsubmit=async e=>{ e.preventDefault(); const corpo={}; campos.forEach(c=>corpo[c]=document.getElementById(c).value);
+  try{ id.value ? await api("/api/veiculos/"+id.value,"PUT",corpo) : await api("/api/veiculos","POST",corpo);
+    mensagem("ok","Veículo salvo com sucesso."); limpar(); carregar(); }catch(er){ mensagem("erro",er.message);} };
+montarMenu().then(clientes).then(carregar);
+</script></body></html>

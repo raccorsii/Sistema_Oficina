@@ -1,0 +1,24 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/static/style.css"><title>Clientes</title></head><body><header id="topo"></header><main><div id="msg" class="msg"></div>
+<div class="card"><form id="busca" class="grid"><label>Buscar (nome, e-mail, telefone ou CPF)<input id="q"></label><div><button>Buscar</button> <button type="button" class="sec" id="limpar">Limpar</button></div></form></div>
+<div class="card"><h3 id="titulo">Novo cliente</h3><form id="f" class="grid"><input type="hidden" id="id">
+<label>Nome<input id="nome" required></label><label>CPF<input id="cpf" placeholder="000.000.000-00"></label>
+<label>Telefone<input id="telefone"></label><label>E-mail<input id="email" type="email"></label>
+<label>Endereço<input id="endereco"></label><div><button>Salvar</button> <button type="button" class="sec" id="cancelar">Cancelar</button></div></form>
+<small>Ao editar, deixe o CPF vazio para mantê-lo. O CPF é armazenado criptografado (bcrypt) e não é exibido.</small></div>
+<div class="card"><table><thead><tr><th>Nome</th><th>Telefone</th><th>E-mail</th><th>Endereço</th><th></th></tr></thead><tbody id="lista"></tbody></table></div></main>
+<script src="/static/app.js"></script><script>
+const campos = ["nome","cpf","telefone","email","endereco"];
+function limpar(){ id.value=""; campos.forEach(c=>document.getElementById(c).value=""); titulo.textContent="Novo cliente"; }
+async function carregar(){ const dados = await api("/api/clientes?q="+encodeURIComponent(q.value)); lista.replaceChildren();
+  if(!dados.length){ const tr=el("tr"); tr.append(el("td","Nenhum cliente encontrado.",{colSpan:5})); lista.append(tr); }
+  dados.forEach(c=>{ const tr=el("tr"); [c.nome,c.telefone,c.email,c.endereco].forEach(v=>tr.append(el("td",v||"")));
+    const td=el("td"); const e=el("button","Editar"); e.onclick=()=>{ id.value=c.id; campos.forEach(k=>document.getElementById(k).value=k=="cpf"?"":(c[k]||"")); titulo.textContent="Editar cliente #"+c.id; scrollTo(0,0); };
+    const x=el("button","Excluir",{className:"perigo"}); x.onclick=async()=>{ if(!confirm("Excluir "+c.nome+"?"))return; try{ await api("/api/clientes/"+c.id,"DELETE"); mensagem("ok","Cliente excluído."); carregar(); }catch(er){ mensagem("erro",er.message);} };
+    td.append(e," ",x); tr.append(td); lista.append(tr); }); }
+busca.onsubmit=e=>{e.preventDefault(); carregar().catch(er=>mensagem("erro",er.message));};
+limpar_=document.getElementById("limpar"); limpar_.onclick=()=>{q.value=""; carregar();}; cancelar.onclick=limpar;
+f.onsubmit=async e=>{ e.preventDefault(); const corpo={}; campos.forEach(c=>corpo[c]=document.getElementById(c).value);
+  try{ id.value ? await api("/api/clientes/"+id.value,"PUT",corpo) : await api("/api/clientes","POST",corpo);
+    mensagem("ok","Cliente salvo com sucesso."); limpar(); carregar(); }catch(er){ mensagem("erro",er.message);} };
+montarMenu().then(carregar);
+</script></body></html>

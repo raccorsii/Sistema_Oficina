@@ -1,0 +1,11 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/static/style.css"><title>Login</title></head><body>
+<main class="login"><div class="card"><h2>Oficina Mecânica</h2><div id="msg" class="msg"></div>
+<form id="f"><label>Usuário<input id="login" autocomplete="username"></label>
+<label>Senha<input id="senha" type="password" autocomplete="current-password"></label>
+<button>Entrar</button></form></div></main>
+<script src="/static/app.js"></script><script>
+if (new URLSearchParams(location.search).get("expirou")) mensagem("erro", "Sessão expirada. Entre novamente.");
+document.getElementById("f").onsubmit = async e => { e.preventDefault();
+  try { await api("/api/login", "POST", { login: login.value, senha: senha.value }); location.href = "/principal"; }
+  catch (err) { mensagem("erro", err.message); senha.value = ""; } };
+</script></body></html>
